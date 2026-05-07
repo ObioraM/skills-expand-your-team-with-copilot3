@@ -40,8 +40,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let searchQuery = "";
   let currentDay = "";
   let currentTimeRange = "";
-  const MAX_SHARE_TEXT_LENGTH = 220;
+  const MAX_SHARE_MESSAGE_LENGTH = 220;
   const HIGHLIGHT_DURATION_MS = 2000;
+  const ELLIPSIS = "...";
+  const SHARE_MESSAGE_TEMPLATE =
+    'Check out "{activityName}" at {schoolName}! {description} Schedule: {schedule}';
 
   // Authentication state
   let currentUser = null;
@@ -325,12 +328,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const activityUrl = `${window.location.origin}${
       window.location.pathname
     }#activity-${activitySlug}`;
-    const baseShareText = `Check out "${activityName}" at ${getSchoolName()}! ${details.description} Schedule: ${formattedSchedule}`;
+    const baseShareText = SHARE_MESSAGE_TEMPLATE.replace(
+      "{activityName}",
+      activityName
+    )
+      .replace("{schoolName}", getSchoolName())
+      .replace("{description}", details.description)
+      .replace("{schedule}", formattedSchedule);
     const shareText =
-      baseShareText.length > MAX_SHARE_TEXT_LENGTH
+      baseShareText.length > MAX_SHARE_MESSAGE_LENGTH
         ? `${baseShareText
-            .slice(0, MAX_SHARE_TEXT_LENGTH - 3)
-            .trimEnd()}...`
+            .slice(0, MAX_SHARE_MESSAGE_LENGTH - ELLIPSIS.length)
+            .trimEnd()}${ELLIPSIS}`
         : baseShareText;
     return { activityUrl, shareText };
   }

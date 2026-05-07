@@ -304,6 +304,20 @@ document.addEventListener("DOMContentLoaded", () => {
     return details.schedule;
   }
 
+  // Build social sharing content for an activity
+  function getShareContent(activityName, details, formattedSchedule) {
+    const activityUrl = `${window.location.origin}${
+      window.location.pathname
+    }#activity=${encodeURIComponent(activityName)}`;
+    const shareText = `Check out "${activityName}" at Mergington High School! ${details.description} Schedule: ${formattedSchedule}`;
+    return { activityUrl, shareText };
+  }
+
+  // Open social share popup
+  function openShareWindow(url) {
+    window.open(url, "_blank", "noopener,noreferrer,width=600,height=600");
+  }
+
   // Function to determine activity type (this would ideally come from backend)
   function getActivityType(activityName, description) {
     const name = activityName.toLowerCase();
@@ -569,6 +583,10 @@ document.addEventListener("DOMContentLoaded", () => {
         `
         }
       </div>
+      <div class="share-section">
+        <p class="share-label">Share with friends:</p>
+        <div class="share-buttons"></div>
+      </div>
     `;
 
     // Add click handlers for delete buttons
@@ -586,6 +604,67 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
+
+    // Add social sharing buttons
+    const { activityUrl, shareText } = getShareContent(
+      name,
+      details,
+      formattedSchedule
+    );
+    const shareButtonsContainer = activityCard.querySelector(".share-buttons");
+    const shareButtons = [
+      {
+        label: "WhatsApp",
+        className: "share-button whatsapp-share",
+        onClick: () =>
+          openShareWindow(
+            `https://wa.me/?text=${encodeURIComponent(
+              `${shareText} ${activityUrl}`
+            )}`
+          ),
+      },
+      {
+        label: "Facebook",
+        className: "share-button facebook-share",
+        onClick: () =>
+          openShareWindow(
+            `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+              activityUrl
+            )}`
+          ),
+      },
+      {
+        label: "X",
+        className: "share-button x-share",
+        onClick: () =>
+          openShareWindow(
+            `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+              shareText
+            )}&url=${encodeURIComponent(activityUrl)}`
+          ),
+      },
+      {
+        label: "Copy Link",
+        className: "share-button copy-share",
+        onClick: async () => {
+          try {
+            await navigator.clipboard.writeText(`${shareText} ${activityUrl}`);
+            showMessage("Share link copied to clipboard!", "success");
+          } catch (error) {
+            showMessage("Could not copy link. Please try again.", "error");
+          }
+        },
+      },
+    ];
+
+    shareButtons.forEach(({ label, className, onClick }) => {
+      const shareButton = document.createElement("button");
+      shareButton.type = "button";
+      shareButton.className = className;
+      shareButton.textContent = label;
+      shareButton.addEventListener("click", onClick);
+      shareButtonsContainer.appendChild(shareButton);
+    });
 
     activitiesList.appendChild(activityCard);
   }

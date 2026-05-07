@@ -40,6 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let searchQuery = "";
   let currentDay = "";
   let currentTimeRange = "";
+  const MAX_SHARE_TEXT_LENGTH = 220;
+  const HIGHLIGHT_DURATION_MS = 2000;
 
   // Authentication state
   let currentUser = null;
@@ -325,8 +327,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }#activity-${activitySlug}`;
     const baseShareText = `Check out "${activityName}" at ${getSchoolName()}! ${details.description} Schedule: ${formattedSchedule}`;
     const shareText =
-      baseShareText.length > 220
-        ? `${baseShareText.slice(0, 217).trimEnd()}...`
+      baseShareText.length > MAX_SHARE_TEXT_LENGTH
+        ? `${baseShareText
+            .slice(0, MAX_SHARE_TEXT_LENGTH - 3)
+            .trimEnd()}...`
         : baseShareText;
     return { activityUrl, shareText };
   }
@@ -351,7 +355,7 @@ document.addEventListener("DOMContentLoaded", () => {
     textArea.focus();
     textArea.select();
 
-    // Legacy fallback for older browsers without Clipboard API support
+    // Deprecated API fallback kept for older browsers without Clipboard API support
     const copied = document.execCommand("copy");
     document.body.removeChild(textArea);
 
@@ -376,7 +380,7 @@ document.addEventListener("DOMContentLoaded", () => {
     sharedActivity.classList.add("shared-activity-highlight");
     setTimeout(() => {
       sharedActivity.classList.remove("shared-activity-highlight");
-    }, 2000);
+    }, HIGHLIGHT_DURATION_MS);
   }
 
   // Function to determine activity type (this would ideally come from backend)

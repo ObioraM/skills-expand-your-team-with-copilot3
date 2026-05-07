@@ -24,6 +24,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginForm = document.getElementById("login-form");
   const closeLoginModal = document.querySelector(".close-login-modal");
   const loginMessage = document.getElementById("login-message");
+  const schoolName =
+    document.querySelector("header h1")?.textContent?.trim() || "Our School";
 
   // Activity categories with corresponding colors
   const activityTypes = {
@@ -304,18 +306,69 @@ document.addEventListener("DOMContentLoaded", () => {
     return details.schedule;
   }
 
+  // Generate a stable slug for activity element IDs
+  function getActivitySlug(activityName) {
+    return activityName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+
   // Build social sharing content for an activity
   function getShareContent(activityName, details, formattedSchedule) {
+    const activitySlug = getActivitySlug(activityName);
     const activityUrl = `${window.location.origin}${
       window.location.pathname
-    }#activity=${encodeURIComponent(activityName)}`;
-    const shareText = `Check out "${activityName}" at Mergington High School! ${details.description} Schedule: ${formattedSchedule}`;
+    }#activity-${activitySlug}`;
+    const shareText = `Check out "${activityName}" at ${schoolName}! ${details.description} Schedule: ${formattedSchedule}`;
     return { activityUrl, shareText };
   }
 
   // Open social share popup
   function openShareWindow(url) {
     window.open(url, "_blank", "noopener,noreferrer,width=600,height=600");
+  }
+
+  // Copy text to clipboard with fallback for broader browser support
+  async function copyToClipboard(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    const copied = document.execCommand("copy");
+    document.body.removeChild(textArea);
+
+    if (!copied) {
+      throw new Error("Copy command was not successful.");
+    }
+  }
+
+  // Scroll to and highlight shared activity when a deep link is used
+  function focusSharedActivityFromHash() {
+    const { hash } = window.location;
+    if (!hash.startsWith("#activity-")) {
+      return;
+    }
+
+    const sharedActivity = document.querySelector(hash);
+    if (!sharedActivity) {
+      return;
+    }
+
+    sharedActivity.scrollIntoView({ behavior: "smooth", block: "center" });
+    sharedActivity.classList.add("shared-activity-highlight");
+    setTimeout(() => {
+      sharedActivity.classList.remove("shared-activity-highlight");
+    }, 2000);
   }
 
   // Function to determine activity type (this would ideally come from backend)
@@ -484,12 +537,15 @@ document.addEventListener("DOMContentLoaded", () => {
     Object.entries(filteredActivities).forEach(([name, details]) => {
       renderActivityCard(name, details);
     });
+
+    focusSharedActivityFromHash();
   }
 
   // Function to render a single activity card
   function renderActivityCard(name, details) {
     const activityCard = document.createElement("div");
     activityCard.className = "activity-card";
+    activityCard.id = `activity-${getActivitySlug(name)}`;
 
     // Calculate spots and capacity
     const totalSpots = details.max_participants;
@@ -648,7 +704,7 @@ document.addEventListener("DOMContentLoaded", () => {
         className: "share-button copy-share",
         onClick: async () => {
           try {
-            await navigator.clipboard.writeText(`${shareText} ${activityUrl}`);
+            await copyToClipboard(`${shareText} ${activityUrl}`);
             showMessage("Share link copied to clipboard!", "success");
           } catch (error) {
             showMessage("Could not copy link. Please try again.", "error");
@@ -719,6 +775,8 @@ document.addEventListener("DOMContentLoaded", () => {
       fetchActivities();
     });
   });
+
+  window.addEventListener("hashchange", focusSharedActivityFromHash);
 
   // Open registration modal
   function openRegistrationModal(activityName) {

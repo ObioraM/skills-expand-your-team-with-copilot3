@@ -40,9 +40,11 @@ document.addEventListener("DOMContentLoaded", () => {
   let searchQuery = "";
   let currentDay = "";
   let currentTimeRange = "";
+  // Keep share message short to fit comfortably within strict social post limits.
   const MAX_SHARE_MESSAGE_LENGTH = 220;
   const HIGHLIGHT_DURATION_MS = 2000;
   const ELLIPSIS = "...";
+  const OFFSCREEN_POSITION = "-9999px";
   const SHARE_MESSAGE_TEMPLATE =
     'Check out "{activityName}" at {schoolName}! {description} Schedule: {schedule}';
 
@@ -359,12 +361,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const textArea = document.createElement("textarea");
     textArea.value = text;
     textArea.style.position = "fixed";
-    textArea.style.left = "-9999px";
+    textArea.style.left = OFFSCREEN_POSITION;
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();
 
-    // Deprecated API fallback kept for older browsers without Clipboard API support
+    // Deprecated API fallback intentionally used for older browsers/non-secure contexts
     const copied = document.execCommand("copy");
     document.body.removeChild(textArea);
 

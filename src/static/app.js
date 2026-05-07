@@ -24,8 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const loginForm = document.getElementById("login-form");
   const closeLoginModal = document.querySelector(".close-login-modal");
   const loginMessage = document.getElementById("login-message");
-  const schoolName =
-    document.querySelector("header h1")?.textContent?.trim() || "Our School";
 
   // Activity categories with corresponding colors
   const activityTypes = {
@@ -314,13 +312,22 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/^-+|-+$/g, "");
   }
 
+  // Read school name from page when needed
+  function getSchoolName() {
+    return document.querySelector("header h1")?.textContent?.trim() || "Our School";
+  }
+
   // Build social sharing content for an activity
   function getShareContent(activityName, details, formattedSchedule) {
     const activitySlug = getActivitySlug(activityName);
     const activityUrl = `${window.location.origin}${
       window.location.pathname
     }#activity-${activitySlug}`;
-    const shareText = `Check out "${activityName}" at ${schoolName}! ${details.description} Schedule: ${formattedSchedule}`;
+    const baseShareText = `Check out "${activityName}" at ${getSchoolName()}! ${details.description} Schedule: ${formattedSchedule}`;
+    const shareText =
+      baseShareText.length > 220
+        ? `${baseShareText.slice(0, 217).trimEnd()}...`
+        : baseShareText;
     return { activityUrl, shareText };
   }
 
@@ -344,6 +351,7 @@ document.addEventListener("DOMContentLoaded", () => {
     textArea.focus();
     textArea.select();
 
+    // Legacy fallback for older browsers without Clipboard API support
     const copied = document.execCommand("copy");
     document.body.removeChild(textArea);
 
@@ -675,7 +683,7 @@ document.addEventListener("DOMContentLoaded", () => {
         onClick: () =>
           openShareWindow(
             `https://wa.me/?text=${encodeURIComponent(
-              `${shareText} ${activityUrl}`
+              `${shareText}\n${activityUrl}`
             )}`
           ),
       },
@@ -694,7 +702,7 @@ document.addEventListener("DOMContentLoaded", () => {
         className: "share-button x-share",
         onClick: () =>
           openShareWindow(
-            `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+            `https://x.com/intent/tweet?text=${encodeURIComponent(
               shareText
             )}&url=${encodeURIComponent(activityUrl)}`
           ),
@@ -704,7 +712,7 @@ document.addEventListener("DOMContentLoaded", () => {
         className: "share-button copy-share",
         onClick: async () => {
           try {
-            await copyToClipboard(`${shareText} ${activityUrl}`);
+            await copyToClipboard(`${shareText}\n${activityUrl}`);
             showMessage("Share link copied to clipboard!", "success");
           } catch (error) {
             showMessage("Could not copy link. Please try again.", "error");
